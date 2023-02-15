@@ -1,0 +1,205 @@
+% Recommended preamble:
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size={4 by 5}, horizontal sep={1cm}}, label style={font={\footnotesize}}, ticklabel style={font={\scriptsize}}, xtick={1,2,3}, grid={major}, ymin={0}, width={2in}, height={2in}, ylabel shift={-5pt}, xlabel shift={-5pt}, xlabel={$k$}]
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=1}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}, title={\textbf{Model averaging}\\}, title style={align={center}}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  2.999999999991e-12  \\
+            2.0  1.6219308299872544e-6  \\
+            3.0  0.9999983780661701  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$q(z=k)$}, style={thick}, title={\textbf{Model selection}\\}, title style={align={center}}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.0  \\
+            2.0  0.0  \\
+            3.0  1.0  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}, title={\textbf{Model combination}\\(online)}, title style={align={center}, yshift={-3pt}}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.16666666666666663  \\
+            2.0  0.16666666666666663  \\
+            3.0  0.6666666666666667  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}, title={\textbf{Model combination}\\(variational)}, title style={align={center}, yshift={-3pt}}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.1666666666672164  \\
+            2.0  0.16666670704235587  \\
+            3.0  0.6666666262904277  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=5}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  1.0019265886430376e-12  \\
+            2.0  0.9999999999979962  \\
+            3.0  1.0019265886430376e-12  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$q(z=k)$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.0  \\
+            2.0  1.0  \\
+            3.0  0.0  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.05555555555555555  \\
+            2.0  0.7222222222222222  \\
+            3.0  0.22222222222222224  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.05577702084118733  \\
+            2.0  0.7220133069497697  \\
+            3.0  0.2222096722090428  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=10}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  1.0987993878358567e-12  \\
+            2.0  0.9999999999978999  \\
+            3.0  1.0013214464064084e-12  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$q(z=k)$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.0  \\
+            2.0  1.0  \\
+            3.0  0.0  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.12121212121212123  \\
+            2.0  0.7575757575757577  \\
+            3.0  0.12121212121212123  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.12101469041436518  \\
+            2.0  0.7577659900877871  \\
+            3.0  0.1212193194978477  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=100}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  7.849808496858969e-8  \\
+            2.0  0.9999907326816103  \\
+            3.0  9.188820304693554e-6  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$q(z=k)$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.0  \\
+            2.0  1.0  \\
+            3.0  0.0  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.23102310231023102  \\
+            2.0  0.5082508250825083  \\
+            3.0  0.2607260726072607  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.23011659021308056  \\
+            2.0  0.5121732758657204  \\
+            3.0  0.2577101339211991  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=1000}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  1.0007463605781277e-12  \\
+            2.0  0.9999999999762207  \\
+            3.0  2.2778522896232775e-11  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$q(z=k)$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.0  \\
+            2.0  1.0  \\
+            3.0  0.0  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.22710622710622708  \\
+            2.0  0.4578754578754579  \\
+            3.0  0.315018315018315  \\
+        }
+        ;
+    \nextgroupplot[ybar, bar width={20pt}, ylabel={$\mathbb{E}_{q(\pi)}[\pi_k]$}, style={thick}]
+    \addplot[fill={blue}]
+        table[row sep={\\}]
+        {
+            \\
+            1.0  0.22156706012068855  \\
+            2.0  0.4656148460346169  \\
+            3.0  0.31281809384469456  \\
+        }
+        ;
+\end{groupplot}
+\end{tikzpicture}
