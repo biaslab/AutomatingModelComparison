@@ -139,7 +139,7 @@ begin
 	plt.figure()
 	plt.bar(1:length(probvec(results_averaging.posteriors[:z])), probvec(results_averaging.posteriors[:z]))
 	plt.xlabel(L"k")
-	plt.ylabel(L"p(z=k)")
+	plt.ylabel(L"p(z=k\mid y_{1:N})")
 	plt.xticks(1:length(probvec(results_averaging.posteriors[:z])),1:length(probvec(results_averaging.posteriors[:z])) )
 	plt.grid()
 	plt.gcf()
@@ -207,7 +207,7 @@ begin
 	plt.figure()
 	plt.bar(1:length(mean(results_selection.posteriors[:z])), mean(results_selection.posteriors[:z]))
 	plt.xlabel(L"k")
-	plt.ylabel(L"p(z=k)")
+	plt.ylabel(L"p(z=k\mid y_{1:N})")
 	plt.xticks(1:length(mean(results_selection.posteriors[:z])),1:length(mean(results_selection.posteriors[:z])) )
 	plt.grid()
 	plt.gcf()
@@ -383,7 +383,7 @@ begin
 	plt.figure()
 	plt.bar(1:length(probvec(results_combination.history[:π][end])), normalize(probvec(results_combination.history[:π][end]) - ones(3)./3*nr_samples, 1))
 	plt.xlabel(L"k")
-	plt.ylabel(L"p(z=k)")
+	plt.ylabel(L"p(z=k\mid y_{1:N})")
 	plt.xticks(1:length(probvec(results_combination.history[:π][end])),1:length(probvec(results_combination.history[:π][end])) )
 	plt.grid()
 	plt.gcf()
@@ -488,7 +488,7 @@ begin
 	plt.figure()
 	plt.bar(1:length(probvec(results_combination_variational.posteriors[:π])), mean(results_combination_variational.posteriors[:π]), yerr=sqrt.(var(results_combination_variational.posteriors[:π])))
 	plt.xlabel(L"k")
-	plt.ylabel(L"p(z=k)")
+	plt.ylabel(L"p(z=k\mid y_{1:N})")
 	plt.xticks(1:length(probvec(results_combination_variational.posteriors[:π])),1:length(probvec(results_combination_variational.posteriors[:π])) )
 	plt.grid()
 	plt.gcf()
@@ -499,6 +499,7 @@ begin
 	plt.figure(figsize=(15,5))
 	plt.scatter(data, zeros(nr_samples).+rand(nr_samples), c=argmax.(probvec.(results_combination_variational.posteriors[:z])))
 	plt.xlim(-6,6)
+	plt.xlabel(L"y")
 	plt.grid()
 	plt.gcf()
 end
@@ -520,8 +521,8 @@ begin
 	ax.plot(-6:0.01:6, map(x -> dist.prior.p[2]*pdf(dist.components[2], x), -6:0.01:6), color="red", linestyle="--")
 	ax.plot(-6:0.01:6, map(x -> dist.prior.p[3]*pdf(dist.components[3], x), -6:0.01:6), color="red", linestyle="--")
 	ax.grid()
-	ax.set_xlabel(L"x")
-	ax.set_ylabel(L"p(x)")
+	ax.set_xlabel(L"y")
+	ax.set_ylabel(L"p(y)")
 	ax.set_xlim(-6, 6)
 	ax.set_ylim(0, 0.25)
 
@@ -536,7 +537,7 @@ begin
 		av = run_averaging(datax)
 		axx.bar(1:length(probvec(av.posteriors[:z])), probvec(av.posteriors[:z]))
 		axx.set_xlabel(L"k")
-		axx.set_ylabel(L"p(z=k)")
+		axx.set_ylabel(L"p(z=k\mid y_{1:N})")
 		axx.set_xticks(1:length(probvec(av.posteriors[:z])),1:length(probvec(av.posteriors[:z])) )
 		axx.grid()
 
@@ -546,7 +547,7 @@ begin
 		se = run_selection(datax)
 		axx.bar(1:length(mean(se.posteriors[:z])), mean(se.posteriors[:z]))
 		axx.set_xlabel(L"k")
-		axx.set_ylabel(L"p(z=k)")
+		axx.set_ylabel(L"p(z=k\mid y_{1:N})")
 		axx.set_xticks(1:length(mean(se.posteriors[:z])),1:length(mean(se.posteriors[:z])) )
 		axx.grid()
 
@@ -566,7 +567,7 @@ begin
 		co2 = run_combination_variational(datax)
 		axx.bar(1:length(probvec(co2.posteriors[:π])), probvec(co2.posteriors[:π]), yerr=sqrt.(var(co2.posteriors[:π])))
 		axx.set_xlabel(L"k")
-		axx.set_ylabel(L"p(z=k)")
+		axx.set_ylabel(L"p(z=k\mid y_{1:N})")
 		axx.set_xticks(1:length(probvec(co2.posteriors[:π])), 1:length(probvec(co2.posteriors[:π])))
 		axx.grid()
 		
@@ -634,7 +635,7 @@ fig_tikz = @pgf GroupPlot(
 		ybar,
 		bar_width=bar_width,
 		ylabel_style={align="center"},
-		ylabel = "\$\\bm{N=1}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, x)\$",
+		ylabel = "\$\\bm{N=1}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, y_{1:N})\$",
         style = {thick},
 		title = "\\textbf{Model averaging}\\\\",
 		title_style={align="center"}
@@ -695,7 +696,7 @@ fig_tikz = @pgf GroupPlot(
 		ybar,
 		bar_width=bar_width,
 		ylabel_style={align="center"},
-		ylabel = "\$\\bm{N=5}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, x)\$",
+		ylabel = "\$\\bm{N=5}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, y_{1:N})\$",
         style = {thick},
     },
     Plot({ 
@@ -748,7 +749,7 @@ fig_tikz = @pgf GroupPlot(
 		ybar,
 		bar_width=bar_width,
 		ylabel_style={align="center"},
-		ylabel = "\$\\bm{N=10}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, x)\$",
+		ylabel = "\$\\bm{N=10}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, y_{1:N})\$",
         style = {thick},
     },
     Plot({ 
@@ -802,7 +803,7 @@ fig_tikz = @pgf GroupPlot(
 		ybar,
 		bar_width=bar_width,
 		ylabel_style={align="center"},
-		ylabel = "\$\\bm{N=100}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, x)\$",
+		ylabel = "\$\\bm{N=100}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, y_{1:N})\$",
         style = {thick},
     },
     Plot({ 
@@ -856,7 +857,7 @@ fig_tikz = @pgf GroupPlot(
 		ybar,
 		bar_width=bar_width,
 		ylabel_style={align="center"},
-		ylabel = "\$\\bm{N=1000}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, x)\$",
+		ylabel = "\$\\bm{N=1000}\$ \\\\ \\\\ \$p(z=k \\,\\vert\\, y_{1:N})\$",
         style = {thick},
     },
     Plot({ 

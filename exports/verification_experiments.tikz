@@ -1,7 +1,7 @@
 % Recommended preamble:
 \begin{tikzpicture}
 \begin{groupplot}[group style={group size={4 by 5}, horizontal sep={1cm}}, label style={font={\footnotesize}}, ticklabel style={font={\scriptsize}}, xtick={1,2,3}, grid={major}, ymin={0}, width={2in}, height={2in}, ylabel shift={-5pt}, xlabel shift={-5pt}, xlabel={$k$}]
-    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=1}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}, title={\textbf{Model averaging}\\}, title style={align={center}}]
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=1}$ \\ \\ $p(z=k \,\vert\, y_{1:N})$}, style={thick}, title={\textbf{Model averaging}\\}, title style={align={center}}]
     \addplot[fill={blue}]
         table[row sep={\\}]
         {
@@ -41,7 +41,7 @@
             3.0  0.6666666262904277  \\
         }
         ;
-    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=5}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}]
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=5}$ \\ \\ $p(z=k \,\vert\, y_{1:N})$}, style={thick}]
     \addplot[fill={blue}]
         table[row sep={\\}]
         {
@@ -81,7 +81,7 @@
             3.0  0.2222096722090428  \\
         }
         ;
-    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=10}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}]
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=10}$ \\ \\ $p(z=k \,\vert\, y_{1:N})$}, style={thick}]
     \addplot[fill={blue}]
         table[row sep={\\}]
         {
@@ -121,7 +121,7 @@
             3.0  0.1212193194978477  \\
         }
         ;
-    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=100}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}]
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=100}$ \\ \\ $p(z=k \,\vert\, y_{1:N})$}, style={thick}]
     \addplot[fill={blue}]
         table[row sep={\\}]
         {
@@ -161,7 +161,7 @@
             3.0  0.2577101339211991  \\
         }
         ;
-    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=1000}$ \\ \\ $p(z=k \,\vert\, x)$}, style={thick}]
+    \nextgroupplot[ybar, bar width={20pt}, ylabel style={align={center}}, ylabel={$\bm{N=1000}$ \\ \\ $p(z=k \,\vert\, y_{1:N})$}, style={thick}]
     \addplot[fill={blue}]
         table[row sep={\\}]
         {
