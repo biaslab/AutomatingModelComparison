@@ -19,7 +19,7 @@ end
 using Pkg; Pkg.activate("..");
 
 # ╔═╡ 71406015-1c45-4d78-bbcb-30506d6c68ac
-using RxInfer, Random, PlutoUI, PyPlot, LaTeXStrings, PGFPlotsX
+using RxInfer, Random, PlutoUI, PyPlot, LaTeXStrings, PGFPlotsX, StatsBase, LinearAlgebra
 
 # ╔═╡ f99478a1-20ed-405a-8405-77b9d087ca4e
 begin
@@ -103,6 +103,7 @@ md"""
 begin
 	push!(PGFPlotsX.CUSTOM_PREAMBLE, raw"\usepackage{amssymb}");
 	push!(PGFPlotsX.CUSTOM_PREAMBLE, raw"\usepackage{bm}");
+	push!(PGFPlotsX.CUSTOM_PREAMBLE, raw"\usepgfplotslibrary{statistics}");
 end;
 
 # ╔═╡ a2c160ae-6536-45cc-b56c-cf804799eeb8
@@ -126,7 +127,7 @@ begin
 	plt.plot(collect(-5:0.01:5), exp.(f1.(collect(-5:0.01:5))), color="red")
 	plt.plot(collect(-5:0.01:5), exp.(f2.(collect(-5:0.01:5))), color="red")
 	plt.plot(collect(-5:0.01:5), exp.(f3.(collect(-5:0.01:5))), color="red")
-	plt.xlabel(L"x")
+	plt.xlabel(L"y")
 	plt.ylabel("number of samples")
 	plt.ylim(0, 1)
 	plt.xlim(-3, 3)
@@ -188,8 +189,8 @@ begin
 	plt.figure()
 	plt.bar([-0.2, 0.9, -1.8], probvec(results_averaging.posteriors[:z]))
 	plt.grid()
-	plt.ylabel(L"p(z\mid y)")
-	plt.xlabel(L"d")
+	plt.ylabel(L"p(z=k\mid y_{1:N})")
+	plt.xlabel(L"d_k")
 	plt.xticks([-0.2, 0.9, -1.8])
 	plt.xlim(-2.5, 2.5)
 	plt.gcf()
@@ -281,6 +282,175 @@ end
 	)
  end
 
+# ╔═╡ d6497f63-3c45-49f9-bf02-e5e016628b24
+begin
+	using StatsBase: Histogram, fit
+
+	data_1000 = randn(MersenneTwister(123), 1000);
+	results_averaging_1000 = run_averaging(data_1000)
+	results_combination_1000 = run_combination(data_1000)
+	
+fig_tikz = @pgf GroupPlot(
+
+	# group plot options
+	{
+		group_style = {
+			group_size = "2 by 2",
+			horizontal_sep = "1.5cm",
+			vertical_sep = "1.5cm"
+		},
+		label_style={font="\\footnotesize"},
+		ticklabel_style={font="\\scriptsize",},
+        grid = "major",
+		width = "3in",
+		height = "3in",
+		# ylabel_shift = "-5pt",
+		# xlabel_shift = "-5pt",
+		# xlabel = "\$k\$",
+	},
+
+	# row 1, column 1
+	{
+		ybar,
+		bar_width="15pt",
+		ylabel = "\$p(z=k\\mid y_{1:N})\$",
+		xlabel = "\$d_k\$",
+        style = {thick},
+		title = "\\textbf{Model averaging}\\\\",
+		title_style={align="center"},
+		ymin = 0,
+		xmin = -3,
+		xmax = 3
+    },
+    Plot({ 
+			fill="blue",
+        },
+        Table([-0.2, 0.9, -1.8], probvec(results_averaging_1000.posteriors[:z]))
+    ),
+
+	# row 1, column 2
+	{
+		ybar,
+		bar_width="15pt",
+		ylabel = "\$\\mathbb{E}_{q(\\pi)}[\\pi_k]\$",
+		xlabel = "\$d_k\$",
+        style = {thick},
+		title = "\\textbf{Model combination}\\\\(variational)",
+		title_style={align="center", yshift="-3pt"},
+		ymin = 0,
+		xmin = -3,
+		xmax = 3
+    },
+    Plot({ 
+			fill="blue",
+        },
+        Table([-0.2, 0.9, -1.8], mean(results_combination_1000.posteriors[:π]))
+    ),
+
+	# row 2, column 1
+	{
+		ylabel = "\$p(y_{N+1}\\mid y_{1:N})\$",
+		xlabel = "\$y_{N+1}\$",
+		ymin = 0,
+		ymax = 1,
+		xtick = [-3, -2, -1, 0, 1, 2, 3],
+		xmin = -3,
+		xmax = 3,
+        style = {thick},
+    },
+    Plot({ 
+			ybar_interval,
+			fill="blue",
+			fill_opacity=0.5,
+			draw_opacity=0,
+        },
+        Table(normalize(fit(Histogram, data_1000; nbins=100)))
+    ),
+	Plot(
+		{
+			dashed,
+			color="red",
+			line_width="1pt",
+		},
+		Table(collect(-3:0.01:3), probvec(results_averaging_1000.posteriors[:z])[1] * exp.(f1.(collect(-3:0.01:3))))
+	),
+	Plot(
+		{
+			dashed,
+			color="red",
+			line_width="1pt",
+		},
+		Table(collect(-3:0.01:3), probvec(results_averaging_1000.posteriors[:z])[2] * exp.(f2.(collect(-3:0.01:3))))
+	),
+	Plot(
+		{
+			dashed,
+			color="red",
+			line_width="1pt",
+		},
+		Table(collect(-3:0.01:3), probvec(results_averaging_1000.posteriors[:z])[3] * exp.(f3.(collect(-3:0.01:3))))
+	),
+	Plot(
+		{
+			color="blue",
+			line_width="2pt",
+		},
+		Table(collect(-3:0.01:3), probvec(results_averaging_1000.posteriors[:z])[1] * exp.(f1.(collect(-3:0.01:3))) + probvec(results_averaging_1000.posteriors[:z])[2] * exp.(f2.(collect(-3:0.01:3))) + probvec(results_averaging_1000.posteriors[:z])[3] * exp.(f3.(collect(-3:0.01:3))))
+	),
+
+	# row 2, column 2
+	{
+		ylabel = "\$p(y_{N+1}\\mid y_{1:N})\$",
+		xlabel = "\$y_{N+1}\$",
+		ymin = 0,
+		ymax = 1,
+		xtick = [-3, -2, -1, 0, 1, 2, 3],
+		xmin = -3,
+		xmax = 3,
+        style = {thick},
+    },
+    Plot({ 
+			ybar_interval,
+			fill="blue",
+			fill_opacity=0.5,
+			draw_opacity=0,
+        },
+        Table(normalize(fit(Histogram, data_1000; nbins=100)))
+    ),
+	Plot(
+		{
+			dashed,
+			color="red",
+			line_width="1pt",
+		},
+		Table(collect(-3:0.01:3), mean(results_combination_1000.posteriors[:π])[1] * exp.(f1.(collect(-3:0.01:3))))
+	),
+	Plot(
+		{
+			dashed,
+			color="red",
+			line_width="1pt",
+		},
+		Table(collect(-3:0.01:3), mean(results_combination_1000.posteriors[:π])[2] * exp.(f2.(collect(-3:0.01:3))))
+	),
+	Plot(
+		{
+			dashed,
+			color="red",
+			line_width="1pt",
+		},
+		Table(collect(-3:0.01:3), mean(results_combination_1000.posteriors[:π])[3] * exp.(f3.(collect(-3:0.01:3))))
+	),
+	Plot(
+		{
+			color="blue",
+			line_width="2pt",
+		},
+		Table(collect(-3:0.01:3), mean(results_combination_1000.posteriors[:π])[1] * exp.(f1.(collect(-3:0.01:3))) + mean(results_combination_1000.posteriors[:π])[2] * exp.(f2.(collect(-3:0.01:3))) + mean(results_combination_1000.posteriors[:π])[3] * exp.(f3.(collect(-3:0.01:3))))
+	)	
+)
+end
+
 # ╔═╡ d2ff1764-a587-4857-b4f4-62cdaca3fd3d
 results_combination = run_combination(data)
 
@@ -288,8 +458,8 @@ results_combination = run_combination(data)
 begin
 	plt.figure()
 	plt.bar([-0.2, 0.9, -1.8], mean(results_combination.posteriors[:π]), yerr=sqrt.(var(results_combination.posteriors[:π])))
-	plt.xlabel(L"k")
-	plt.ylabel(L"p(z=k)")
+	plt.xlabel(L"d_k")
+	plt.ylabel(L"p(z=k\mid y_{1:N})")
 	plt.xticks([-0.2, 0.9, -1.8])
 	plt.xlim(-2.5, 2.5)
 	plt.grid()
@@ -313,7 +483,7 @@ begin
 	plt.plot(collect(-5:0.01:5), mean(results_combination.posteriors[:π])[1]*exp.(f1.(collect(-5:0.01:5))), color="red", linestyle="--")
 	plt.plot(collect(-5:0.01:5), mean(results_combination.posteriors[:π])[2]*exp.(f2.(collect(-5:0.01:5))), color="red", linestyle="--")
 	plt.plot(collect(-5:0.01:5), mean(results_combination.posteriors[:π])[3]*exp.(f3.(collect(-5:0.01:5))), color="red", linestyle="--")
-	plt.xlabel(L"x")
+	plt.xlabel(L"y")
 	plt.ylabel("number of samples")
 	plt.ylim(0, 1)
 	plt.xlim(-3, 3)
@@ -326,83 +496,11 @@ md"""
 ### Overview
 """
 
-# ╔═╡ d6497f63-3c45-49f9-bf02-e5e016628b24
+# ╔═╡ 8a7fdde3-dde3-44fe-9768-abf26eca8928
 begin
-	data_1000 = randn(MersenneTwister(123), 1000);
-	results_averaging_1000 = run_averaging(data_1000)
-	results_combination_1000 = run_combination(data_1000)
-	
-fig_tikz = @pgf GroupPlot(
-
-	# group plot options
-	{
-		group_style = {
-			group_size = "2 by 2",
-			horizontal_sep = "1cm",
-		},
-		label_style={font="\\footnotesize"},
-		ticklabel_style={font="\\scriptsize",},
-        grid = "major",
-		width = "3in",
-		height = "3in",
-		# ylabel_shift = "-5pt",
-		# xlabel_shift = "-5pt",
-		# xlabel = "\$k\$",
-	},
-
-	# row 1, column 1
-	{
-		ybar,
-		bar_width="20pt",
-		ylabel = "\$p(z\\mid y)\$",
-		xlabel = "\$d\$",
-        style = {thick},
-		title = "\\textbf{Model averaging}\\\\",
-		title_style={align="center"},
-		ymin = 0
-    },
-    Plot({ 
-			fill="blue",
-        },
-        Table([-0.2, 0.9, -1.8], probvec(results_averaging_1000.posteriors[:z]))
-    ),
-
-	# row 1, column 2
-	{
-		ybar,
-		bar_width="20pt",
-		ylabel = "\$\\mathbb{E}_{q(\\pi)}[\\pi_k]\$",
-        style = {thick},
-		title = "\\textbf{Model combination}\\\\(variational)",
-		title_style={align="center"},
-		ymin = 0
-    },
-    Plot({ 
-			fill="blue",
-        },
-        Table([-0.2, 0.9, -1.8], mean(results_combination_1000.posteriors[:π]))
-    ),
-
-	# row 2, column 1
-	{
-		# ybar,
-		# interval,
-		# bar_width="20pt",
-		# ylabel = "\$\\mathbb{E}_{q(\\pi)}[\\pi_k]\$",
-        # style = {thick},
-		# title = "\\textbf{Model combination}\\\\(variational)",
-		# title_style={align="center"},
-		ymin = 0
-    },
-    Plot({ 
-			fill="blue",
-			hist={bins=100,},
-        },
-        Table(data_1000)
-    ),
-	
-	
-)
+	pgfsave("../exports/validation_experiments_mixed.tikz", fig_tikz)
+	pgfsave("../exports/validation_experiments_mixed.png", fig_tikz)
+	pgfsave("../exports/validation_experiments_mixed.pdf", fig_tikz)
 end
 
 # ╔═╡ Cell order:
@@ -414,7 +512,7 @@ end
 # ╟─a2c160ae-6536-45cc-b56c-cf804799eeb8
 # ╟─513f9123-a620-4918-a47e-742c6bdd225c
 # ╠═1cbf3d0a-1f7b-4f92-a644-318e3ea037d6
-# ╟─f8640cf6-b911-404c-8231-86d76e0dcd77
+# ╠═f8640cf6-b911-404c-8231-86d76e0dcd77
 # ╟─36e84806-8879-4a0a-a6d1-0afc92404766
 # ╠═7e6983c8-1af1-4755-9123-2b1377bdaf7e
 # ╠═5e4bff9f-8848-4b47-9a1d-da421de25563
@@ -430,4 +528,5 @@ end
 # ╟─f2c3f4b4-86c3-40f3-bce5-fbecec9f658b
 # ╟─09864b89-5aaf-49ba-b610-45062596fc4a
 # ╟─94c8a3ef-ff30-4bdd-ac4c-bfa49fe9bb8a
-# ╠═d6497f63-3c45-49f9-bf02-e5e016628b24
+# ╟─d6497f63-3c45-49f9-bf02-e5e016628b24
+# ╟─8a7fdde3-dde3-44fe-9768-abf26eca8928
