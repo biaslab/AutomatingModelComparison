@@ -39,13 +39,8 @@ begin
 	push!(PGFPlotsX.CUSTOM_PREAMBLE, raw"\usepackage{bm}");
 end;
 
-# ╔═╡ efd8d329-d6be-4a47-884e-776d7e5f7a43
-md"""
-Number of samples
-"""
-
 # ╔═╡ 0a8bc1f9-7313-4027-b841-f778b31c91d8
-@bind nr_samples Slider(1:2_000; default=1500, show_value=true)
+md"""number of samples: $(@bind nr_samples Slider(1:2_000; default=1500, show_value=true))"""
 
 # ╔═╡ 34ab39fd-02c3-4e12-857b-3673315cf799
 dist = MixtureModel(Normal, [(-4.0, 1.0), (0.0, 1.0), (5.0, 1.0)], [0.2, 0.5, 0.3]);
@@ -921,7 +916,6 @@ end
 # ╠═34771c7d-de6a-44c8-aa78-4e991f62f237
 # ╠═cd9431ce-ac3c-11ed-02c9-5b5600e798bb
 # ╟─ed0dbb47-764e-4dc6-8d58-5623e582692c
-# ╟─efd8d329-d6be-4a47-884e-776d7e5f7a43
 # ╟─0a8bc1f9-7313-4027-b841-f778b31c91d8
 # ╠═34ab39fd-02c3-4e12-857b-3673315cf799
 # ╠═b9949a48-89d3-4f31-8d48-375ef6c22f84
