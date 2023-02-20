@@ -138,6 +138,25 @@ md"""
 # Validation experiments: online Dirichlet process training
 """
 
+# ╔═╡ c30f10ee-7bb7-4b12-8c90-8c1947ce0bc9
+begin
+	push!(PGFPlotsX.CUSTOM_PREAMBLE, raw"\usepackage{amssymb}");
+	push!(PGFPlotsX.CUSTOM_PREAMBLE, raw"\usepackage{bm}");
+	push!(PGFPlotsX.CUSTOM_PREAMBLE, raw"\usepgfplotslibrary{statistics}");
+	push!(PGFPlotsX.CUSTOM_PREAMBLE, raw"\pgfplotsset{compat=1.5.1}");
+	function plot_ellipse(means::Vector, cov::Matrix)
+		@assert length(means) == 2
+		@assert size(cov) == (2,2)
+		rads = eigvals(cov)
+		vecs = eigvecs(cov)
+		xrad = rads[1]
+		yrad = rads[2]
+		rot = atand(vecs[2,1], vecs[1,2])
+		z = " [black] (axis cs: $(means[1]), $(means[2])) ellipse [rotate=$(rot), x radius=$(xrad), y radius=$(yrad)];"
+		return raw"\draw" * z
+	end
+end;
+
 # ╔═╡ 2bfcbece-2b63-443d-95d9-de7479ded607
 md"""
 ### Generate data
@@ -175,6 +194,9 @@ md"""
 ### Model specification
 """
 
+# ╔═╡ 01187b6e-8bf2-45eb-b918-73b767cf94b8
+md"""upper bound number of components: $(@bind nr_components Slider(1:20; default=10, show_value=true))"""
+
 # ╔═╡ e9c3f636-0049-4b42-b0f9-cc42bee61360
 @model function model_dirichlet_process()
 
@@ -183,11 +205,11 @@ md"""
 
 	# updatable parameters
     α = datavar(Vector{Float64})
-	μ_θ = datavar(Vector{Float64}, 8)
-	Λ_θ = datavar(Matrix{Float64}, 8)
+	μ_θ = datavar(Vector{Float64}, nr_components)
+	Λ_θ = datavar(Matrix{Float64}, nr_components)
 
 	# other variables
-	θk = randomvar(8)
+	θk = randomvar(nr_components)
 	
     # specify initial distribution over clusters
     π ~ Dirichlet(α)
@@ -196,7 +218,7 @@ md"""
 	z ~ Categorical(π) where { pipeline = EnforceMarginalFunctionalDependency(:out) }
 
 	# specify prior models over θ
-	for k in 1:8
+	for k in 1:nr_components
 		θk[k] ~ MvNormalMeanPrecision(μ_θ[k], Λ_θ[k])
 	end
 
@@ -228,7 +250,7 @@ md"""
 """
 
 # ╔═╡ 16e37d4b-523f-4d1b-ab71-b54ba81364b1
-@bind alpha Slider(-5:5; default=0, show_value=false)
+@bind alpha Slider(-5:5; default=-1, show_value=false)
 
 # ╔═╡ 6293a919-a314-4063-a679-c70008b12b2f
 md"""alpha = 1e$(alpha)"""
@@ -239,14 +261,17 @@ base_measure = MvNormalMeanPrecision(zeros(2), 0.1*diagm(ones(2)));
 # ╔═╡ 37897bf5-c864-456f-87c0-1251ad532010
 begin
 	function update_alpha_vector(α_prev)
-		ind = findfirst( isapprox(10.0^alpha + 1e-10), α_prev)
+		ind = findfirst(x -> isapprox(1e-10,x;rtol=0.1), α_prev)
 		if isnothing(ind)
 			α_new = α_prev
-		elseif ind == 2
+			@error "upper bound reached"
+		elseif ind == 2 && α_prev[1] != 10.0^alpha
 			α_new = α_prev
+			α_new[ind-1] = 1
 			α_new[ind] = 10.0^alpha
-		elseif ind > 2 && α_prev[ind-1] != 10.0^alpha
+		elseif ind > 2 && α_prev[ind-1] ≈ 1+10.0^alpha
 			α_new = α_prev
+			α_new[ind-1] = 1
 			α_new[ind] = 10.0^alpha
 		else
 			α_new = α_prev
@@ -270,7 +295,8 @@ end;
 
 # ╔═╡ 5f3b9e1f-2ffc-403b-95df-3e48504399bc
  function run_dirichlet_process(data)
-	 alpha_start = 10.0^alpha * [1.0, 0, 0, 0, 0, 0, 0, 0] + 1e-10*ones(8)
+	 alpha_start = 1e-10*ones(nr_components)
+	 alpha_start[1] = 10.0^alpha
 	 return rxinference(
 		model         = model_dirichlet_process(),
 		data          = (y = [data[:,k] for k=1:size(data,2)], ),
@@ -299,28 +325,290 @@ md"""sample index: $(@bind N Slider(1:nr_samples; default=nr_samples, show_value
 # ╔═╡ e2ed2836-5a4d-4762-ab59-d77277b47f39
 begin
 	plt.figure()
-	plt.scatter(data[1,1:N], data[2,1:N], alpha=0.1)
+	plt.scatter(data[1,1:N], data[2,1:N], alpha=0.1, c=argmax.(mean.(results_dirichlet_process.history[:z][1:N])))
 	for k in findall(x -> x > 1, probvec(results_dirichlet_process.history[:π][N]))
-		plt.scatter(mean(results_dirichlet_process.history[:θk][N][k])[1], mean(results_dirichlet_process.history[:θk][N][k])[2], marker="x")
+		plt.scatter(mean(results_dirichlet_process.history[:θk][N][k])[1], mean(results_dirichlet_process.history[:θk][N][k])[2], marker="x", color="black")
 	end
 	plt.xlabel(L"y_1")
 	plt.ylabel(L"y_2")
 	plt.xlim(-20, 20)
 	plt.ylim(-20, 20)
+	plt.grid()
 	plt.gcf()
+end
+
+# ╔═╡ ef365ff1-9a53-4e7e-96ce-a68baeb6b67b
+begin
+	data_1500 = rand(MersenneTwister(123), dist, 1500)
+	results_dirichlet_process_1500 = run_dirichlet_process(data_1500)
+	N1 = 5
+	N2 = 25
+	N3 = 250
+	N4 = 1500
+
+	C1 = isnothing(findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N1]))) ? nr_components : findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N1])) - 2
+	C2 = isnothing(findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N2]))) ? nr_components : findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N2])) - 2	
+	C3 = isnothing(findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N3]))) ? nr_components : findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N3])) - 2	
+	C4 = isnothing(findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N4]))) ? nr_components : findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N4])) - 2	
+
+	fig_tikz = @pgf GroupPlot(
+
+		# group plot options
+		{
+			group_style = {
+				group_size = "2 by 4",
+				horizontal_sep = "2cm"
+			},
+			label_style={font="\\footnotesize"},
+			ticklabel_style={font="\\scriptsize",},
+	        grid = "major",
+		},
+
+		# row 1 column 1
+		{
+			xlabel="\$y_1\$",
+			ylabel_style={align="center"},
+			ylabel = "\$\\bm{N=$(N1)}\$ \\\\ \\\\ \$y_2\$",
+			xmin = -20,
+			ymin = -20,
+			xmax = 20,
+			ymax = 20,
+			width = "2.5in",
+			height = "2.5in",
+			title = "\\textbf{Assignments and clusters}",
+			axis_equal,
+		},
+		Plot({ 
+				scatter,
+				only_marks,
+				opacity=0.2,
+            	scatter_src="explicit"
+	        },
+			Table(
+				{
+	                meta = "label"
+	            },
+	            x = data_1500[1,1:N1],
+	            y = data_1500[2,1:N1],
+	            label = argmax.(mean.(results_dirichlet_process_1500.history[:z][1:N1]))
+			)
+    	),
+		Plot({ 
+				only_marks,
+				mark_size="4pt",
+				mark_color="black",
+				mark="x",
+				very_thick,
+	        },
+			Table(hcat(mean.(results_dirichlet_process_1500.history[:θk][N1][1:C1])...)')
+    	),
+		plot_ellipse.(mean.(results_dirichlet_process_1500.history[:θk][N1])[1:C1], map(x->x.+diagm(ones(2)), cov.(results_dirichlet_process_1500.history[:θk][N1])[1:C1])),
+
+		# row 1 column 2
+		{
+			ybar,
+			bar_width="10pt",
+			ylabel = "\$\\alpha_k\$",
+			xlabel = "\$k\$",
+			ymin = 0,
+			width = "3.5in",
+			height = "2.5in",
+			title = "\\textbf{Posterior concentration parameters}"
+	    },
+	    Plot({ 
+				fill="blue",
+	        },
+	        Table(collect(1:nr_components), probvec(results_dirichlet_process_1500.history[:π][N1]))
+	    ),
+
+		# row 2 column 1
+		{
+			xlabel="\$y_1\$",
+			ylabel_style={align="center"},
+			ylabel = "\$\\bm{N=$(N2)}\$ \\\\ \\\\ \$y_2\$",
+			xmin = -20,
+			ymin = -20,
+			xmax = 20,
+			ymax = 20,
+			width = "2.5in",
+			height = "2.5in",
+			axis_equal,
+		},
+		Plot({ 
+				scatter,
+				only_marks,
+				opacity=0.2,
+            	scatter_src="explicit"
+	        },
+			Table(
+				{
+	                meta = "label"
+	            },
+	            x = data_1500[1,1:N2],
+	            y = data_1500[2,1:N2],
+	            label = argmax.(mean.(results_dirichlet_process_1500.history[:z][1:N2]))
+			)
+    	),
+		Plot({ 
+				only_marks,
+				mark_size="4pt",
+				mark_color="black",
+				mark="x",
+				very_thick,
+	        },
+			Table(hcat(mean.(results_dirichlet_process_1500.history[:θk][N2][1:C2])...)')
+    	),
+		plot_ellipse.(mean.(results_dirichlet_process_1500.history[:θk][N2])[1:C2], map(x->x.+diagm(ones(2)), cov.(results_dirichlet_process_1500.history[:θk][N2])[1:C2])),
+
+		# row 2 column 2
+		{
+			ybar,
+			bar_width="10pt",
+			ylabel = "\$\\alpha_k\$",
+			xlabel = "\$k\$",
+			ymin = 0,
+			width = "3.5in",
+			height = "2.5in",
+	    },
+	    Plot({ 
+				fill="blue",
+	        },
+	        Table(collect(1:nr_components), probvec(results_dirichlet_process_1500.history[:π][N2]))
+	    ),
+
+		# row 3 column 1
+		{
+			xlabel="\$y_1\$",
+			ylabel_style={align="center"},
+			ylabel = "\$\\bm{N=$(N3)}\$ \\\\ \\\\ \$y_2\$",
+			xmin = -20,
+			ymin = -20,
+			xmax = 20,
+			ymax = 20,
+			width = "2.5in",
+			height = "2.5in",
+			axis_equal,
+		},
+		Plot({ 
+				scatter,
+				only_marks,
+				opacity=0.2,
+         		scatter_src="explicit",
+	        },
+			Table(
+				{
+	                meta = "label"
+	            },
+	            x = data_1500[1,1:N3],
+	            y = data_1500[2,1:N3],
+	            label = argmax.(mean.(results_dirichlet_process_1500.history[:z][1:N3]))
+			)
+    	),
+		Plot({ 
+				only_marks,
+				mark_size="4pt",
+				mark_color="black",
+				mark="x",
+				very_thick,
+	        },
+			Table(hcat(mean.(results_dirichlet_process_1500.history[:θk][N3][1:C3])...)')
+    	),
+		plot_ellipse.(mean.(results_dirichlet_process_1500.history[:θk][N3])[1:C3], map(x->x.+diagm(ones(2)), cov.(results_dirichlet_process_1500.history[:θk][N3])[1:C3])),
+
+		# row 3 column 2
+		{
+			ybar,
+			bar_width="10pt",
+			ylabel = "\$\\alpha_k\$",
+			xlabel = "\$k\$",
+			ymin = 0,
+			width = "3.5in",
+			height = "2.5in",
+	    },
+	    Plot({ 
+				fill="blue",
+	        },
+	        Table(collect(1:nr_components), probvec(results_dirichlet_process_1500.history[:π][N3]))
+	    ),
+
+		# row 4 column 1
+		{
+			xlabel="\$y_1\$",
+			ylabel_style={align="center"},
+			ylabel = "\$\\bm{N=$(N4)}\$ \\\\ \\\\ \$y_2\$",
+			xmin = -20,
+			ymin = -20,
+			xmax = 20,
+			ymax = 20,
+			width = "2.5in",
+			height = "2.5in",
+			axis_equal,
+		},
+		Plot({ 
+				scatter,
+				only_marks,
+				opacity=0.2,
+            	scatter_src="explicit"
+	        },
+			Table(
+				{
+	                meta = "label"
+	            },
+	            x = data_1500[1,1:N4],
+	            y = data_1500[2,1:N4],
+	            label = argmax.(mean.(results_dirichlet_process_1500.history[:z][1:N4]))
+			)
+    	),
+		Plot({ 
+				only_marks,
+				mark_size="4pt",
+				mark_color="black",
+				mark="x",
+				very_thick,
+	        },
+			Table(hcat(mean.(results_dirichlet_process_1500.history[:θk][N4][1:C4])...)')
+    	),
+		plot_ellipse.(mean.(results_dirichlet_process_1500.history[:θk][N4])[1:C4], map(x->x.+diagm(ones(2)), cov.(results_dirichlet_process_1500.history[:θk][N4])[1:C4])),
+
+		# row 4 column 2
+		{
+			ybar,
+			bar_width="10pt",
+			ylabel = "\$\\alpha_k\$",
+			xlabel = "\$k\$",
+			ymin = 0,
+			width = "3.5in",
+			height = "2.5in",
+	    },
+	    Plot({ 
+				fill="blue",
+	        },
+	        Table(collect(1:nr_components), probvec(results_dirichlet_process_1500.history[:π][N4]))
+	    ),
+			
+	)
+end
+
+# ╔═╡ b6ecbc4d-6bc2-4ec5-ad5b-78ae441fbf49
+begin
+	pgfsave("../exports/validation_experiments_dirichlet.tikz", fig_tikz)
+	pgfsave("../exports/validation_experiments_dirichlet.png", fig_tikz)
+	pgfsave("../exports/validation_experiments_dirichlet.pdf", fig_tikz)
 end
 
 # ╔═╡ Cell order:
 # ╟─d2910ba3-6f0c-4905-b10a-f32ad8239ab6
 # ╠═608b82c0-adf2-11ed-0850-ebf580639ec8
 # ╠═a1c1ef76-64d9-4f7b-b6b8-b70e180fc0ff
+# ╟─c30f10ee-7bb7-4b12-8c90-8c1947ce0bc9
 # ╟─2bfcbece-2b63-443d-95d9-de7479ded607
 # ╟─fa56df5b-e46b-4ed7-a9a7-7ae1d8697250
 # ╟─1ee92290-71ac-41ce-9666-241478bc04cb
 # ╠═b9550341-a928-4274-b9da-40ac84d2a991
 # ╟─d6fbfce8-c87b-4e0e-b11c-4d9fdce25b51
 # ╟─4eee819f-f099-4d4d-b72b-434be3077f99
-# ╠═7c5873ce-a0d5-46f2-9d59-188ffd09cb5b
+# ╟─01187b6e-8bf2-45eb-b918-73b767cf94b8
+# ╟─7c5873ce-a0d5-46f2-9d59-188ffd09cb5b
 # ╠═e9c3f636-0049-4b42-b0f9-cc42bee61360
 # ╟─5fd5ee6b-3208-42fe-b8b2-14e95ffd08b5
 # ╠═07b1d74f-d203-475c-834e-ae83459d714a
@@ -335,3 +623,5 @@ end
 # ╠═2bfa1683-86c3-4b9d-b7e3-3890bb32c645
 # ╟─075cbfdd-698b-4a38-8ae3-557d39acb5d2
 # ╟─e2ed2836-5a4d-4762-ab59-d77277b47f39
+# ╟─ef365ff1-9a53-4e7e-96ce-a68baeb6b67b
+# ╟─b6ecbc4d-6bc2-4ec5-ad5b-78ae441fbf49
