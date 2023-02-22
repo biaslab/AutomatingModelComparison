@@ -228,8 +228,7 @@ md"""upper bound number of components: $(@bind nr_components Slider(1:20; defaul
 	θ ~ Mixture(z, tθ) where { pipeline = EnforceMarginalFunctionalDependency(:switch) }
 
 	# specify observation noise
-	# y ~ MvNormalMeanPrecision(θ, diagm(ones(2)))
-	y ~ MvNormalMeanPrecision(θ, I)
+	y ~ MvNormalMeanPrecision(θ, diagm(ones(2)))
 
     return y, θ, θk, z, π, α
 
@@ -365,3 +364,5 @@ end
 # ╠═2bfa1683-86c3-4b9d-b7e3-3890bb32c645
 # ╟─075cbfdd-698b-4a38-8ae3-557d39acb5d2
 # ╟─e2ed2836-5a4d-4762-ab59-d77277b47f39
+# ╠═ef365ff1-9a53-4e7e-96ce-a68baeb6b67b
+# ╟─b6ecbc4d-6bc2-4ec5-ad5b-78ae441fbf49
