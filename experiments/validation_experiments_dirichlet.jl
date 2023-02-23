@@ -242,7 +242,7 @@ md"""
 # ╔═╡ 07b1d74f-d203-475c-834e-ae83459d714a
 @constraints function constraints_dirichlet_process()
     q(z) :: PointMass
-end
+end;
 
 # ╔═╡ 9bc23d63-8693-4eb8-ae90-29ddc4ec4997
 md"""
