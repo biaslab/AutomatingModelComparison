@@ -228,8 +228,7 @@ md"""upper bound number of components: $(@bind nr_components Slider(1:20; defaul
 	θ ~ Mixture(z, tθ) where { pipeline = EnforceMarginalFunctionalDependency(:switch) }
 
 	# specify observation noise
-	# y ~ MvNormalMeanPrecision(θ, diagm(ones(2)))
-	y ~ MvNormalMeanPrecision(θ, I)
+	y ~ MvNormalMeanPrecision(θ, diagm(ones(2)))
 
     return y, θ, θk, z, π, α
 
@@ -338,6 +337,265 @@ begin
 	plt.gcf()
 end
 
+# ╔═╡ ef365ff1-9a53-4e7e-96ce-a68baeb6b67b
+begin
+	data_1500 = rand(MersenneTwister(123), dist, 1500)
+	results_dirichlet_process_1500 = run_dirichlet_process(data_1500)
+	N1 = 5
+	N2 = 25
+	N3 = 250
+	N4 = 1500
+
+	C1 = isnothing(findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N1]))) ? nr_components : findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N1])) - 2
+	C2 = isnothing(findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N2]))) ? nr_components : findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N2])) - 2	
+	C3 = isnothing(findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N3]))) ? nr_components : findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N3])) - 2	
+	C4 = isnothing(findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N4]))) ? nr_components : findfirst(x -> isapprox(1e-10,x;rtol=0.1), probvec(results_dirichlet_process_1500.history[:π][N4])) - 2	
+
+	fig_tikz = @pgf GroupPlot(
+
+		# group plot options
+		{
+			group_style = {
+				group_size = "2 by 4",
+				horizontal_sep = "2cm"
+			},
+			label_style={font="\\footnotesize"},
+			ticklabel_style={font="\\scriptsize",},
+	        grid = "major",
+		},
+
+		# row 1 column 1
+		{
+			xlabel="\$y_1\$",
+			ylabel_style={align="center"},
+			ylabel = "\$\\bm{N=$(N1)}\$ \\\\ \\\\ \$y_2\$",
+			xmin = -20,
+			ymin = -20,
+			xmax = 20,
+			ymax = 20,
+			width = "2.5in",
+			height = "2.5in",
+			title = "\\textbf{Assignments and clusters}",
+			axis_equal,
+		},
+		Plot({ 
+				scatter,
+				only_marks,
+				opacity=0.2,
+            	scatter_src="explicit"
+	        },
+			Table(
+				{
+	                meta = "label"
+	            },
+	            x = data_1500[1,1:N1],
+	            y = data_1500[2,1:N1],
+	            label = argmax.(mean.(results_dirichlet_process_1500.history[:z][1:N1]))
+			)
+    	),
+		Plot({ 
+				only_marks,
+				mark_size="4pt",
+				mark_color="black",
+				mark="x",
+				very_thick,
+	        },
+			Table(hcat(mean.(results_dirichlet_process_1500.history[:θk][N1][1:C1])...)')
+    	),
+		plot_ellipse.(mean.(results_dirichlet_process_1500.history[:θk][N1])[1:C1], map(x->x.+diagm(ones(2)), cov.(results_dirichlet_process_1500.history[:θk][N1])[1:C1])),
+
+		# row 1 column 2
+		{
+			ybar,
+			bar_width="10pt",
+			ylabel = "\$\\alpha_k\$",
+			xlabel = "\$k\$",
+			ymin = 0,
+			width = "3.5in",
+			height = "2.5in",
+			title = "\\textbf{Posterior concentration parameters}"
+	    },
+	    Plot({ 
+				fill="blue",
+	        },
+	        Table(collect(1:nr_components), probvec(results_dirichlet_process_1500.history[:π][N1]))
+	    ),
+
+		# row 2 column 1
+		{
+			xlabel="\$y_1\$",
+			ylabel_style={align="center"},
+			ylabel = "\$\\bm{N=$(N2)}\$ \\\\ \\\\ \$y_2\$",
+			xmin = -20,
+			ymin = -20,
+			xmax = 20,
+			ymax = 20,
+			width = "2.5in",
+			height = "2.5in",
+			axis_equal,
+		},
+		Plot({ 
+				scatter,
+				only_marks,
+				opacity=0.2,
+            	scatter_src="explicit"
+	        },
+			Table(
+				{
+	                meta = "label"
+	            },
+	            x = data_1500[1,1:N2],
+	            y = data_1500[2,1:N2],
+	            label = argmax.(mean.(results_dirichlet_process_1500.history[:z][1:N2]))
+			)
+    	),
+		Plot({ 
+				only_marks,
+				mark_size="4pt",
+				mark_color="black",
+				mark="x",
+				very_thick,
+	        },
+			Table(hcat(mean.(results_dirichlet_process_1500.history[:θk][N2][1:C2])...)')
+    	),
+		plot_ellipse.(mean.(results_dirichlet_process_1500.history[:θk][N2])[1:C2], map(x->x.+diagm(ones(2)), cov.(results_dirichlet_process_1500.history[:θk][N2])[1:C2])),
+
+		# row 2 column 2
+		{
+			ybar,
+			bar_width="10pt",
+			ylabel = "\$\\alpha_k\$",
+			xlabel = "\$k\$",
+			ymin = 0,
+			width = "3.5in",
+			height = "2.5in",
+	    },
+	    Plot({ 
+				fill="blue",
+	        },
+	        Table(collect(1:nr_components), probvec(results_dirichlet_process_1500.history[:π][N2]))
+	    ),
+
+		# row 3 column 1
+		{
+			xlabel="\$y_1\$",
+			ylabel_style={align="center"},
+			ylabel = "\$\\bm{N=$(N3)}\$ \\\\ \\\\ \$y_2\$",
+			xmin = -20,
+			ymin = -20,
+			xmax = 20,
+			ymax = 20,
+			width = "2.5in",
+			height = "2.5in",
+			axis_equal,
+		},
+		Plot({ 
+				scatter,
+				only_marks,
+				opacity=0.2,
+         		scatter_src="explicit",
+	        },
+			Table(
+				{
+	                meta = "label"
+	            },
+	            x = data_1500[1,1:N3],
+	            y = data_1500[2,1:N3],
+	            label = argmax.(mean.(results_dirichlet_process_1500.history[:z][1:N3]))
+			)
+    	),
+		Plot({ 
+				only_marks,
+				mark_size="4pt",
+				mark_color="black",
+				mark="x",
+				very_thick,
+	        },
+			Table(hcat(mean.(results_dirichlet_process_1500.history[:θk][N3][1:C3])...)')
+    	),
+		plot_ellipse.(mean.(results_dirichlet_process_1500.history[:θk][N3])[1:C3], map(x->x.+diagm(ones(2)), cov.(results_dirichlet_process_1500.history[:θk][N3])[1:C3])),
+
+		# row 3 column 2
+		{
+			ybar,
+			bar_width="10pt",
+			ylabel = "\$\\alpha_k\$",
+			xlabel = "\$k\$",
+			ymin = 0,
+			width = "3.5in",
+			height = "2.5in",
+	    },
+	    Plot({ 
+				fill="blue",
+	        },
+	        Table(collect(1:nr_components), probvec(results_dirichlet_process_1500.history[:π][N3]))
+	    ),
+
+		# row 4 column 1
+		{
+			xlabel="\$y_1\$",
+			ylabel_style={align="center"},
+			ylabel = "\$\\bm{N=$(N4)}\$ \\\\ \\\\ \$y_2\$",
+			xmin = -20,
+			ymin = -20,
+			xmax = 20,
+			ymax = 20,
+			width = "2.5in",
+			height = "2.5in",
+			axis_equal,
+		},
+		Plot({ 
+				scatter,
+				only_marks,
+				opacity=0.2,
+            	scatter_src="explicit"
+	        },
+			Table(
+				{
+	                meta = "label"
+	            },
+	            x = data_1500[1,1:N4],
+	            y = data_1500[2,1:N4],
+	            label = argmax.(mean.(results_dirichlet_process_1500.history[:z][1:N4]))
+			)
+    	),
+		Plot({ 
+				only_marks,
+				mark_size="4pt",
+				mark_color="black",
+				mark="x",
+				very_thick,
+	        },
+			Table(hcat(mean.(results_dirichlet_process_1500.history[:θk][N4][1:C4])...)')
+    	),
+		plot_ellipse.(mean.(results_dirichlet_process_1500.history[:θk][N4])[1:C4], map(x->x.+diagm(ones(2)), cov.(results_dirichlet_process_1500.history[:θk][N4])[1:C4])),
+
+		# row 4 column 2
+		{
+			ybar,
+			bar_width="10pt",
+			ylabel = "\$\\alpha_k\$",
+			xlabel = "\$k\$",
+			ymin = 0,
+			width = "3.5in",
+			height = "2.5in",
+	    },
+	    Plot({ 
+				fill="blue",
+	        },
+	        Table(collect(1:nr_components), probvec(results_dirichlet_process_1500.history[:π][N4]))
+	    ),
+			
+	)
+end
+
+# ╔═╡ b6ecbc4d-6bc2-4ec5-ad5b-78ae441fbf49
+begin
+	pgfsave("../exports/validation_experiments_dirichlet.tikz", fig_tikz)
+	pgfsave("../exports/validation_experiments_dirichlet.png", fig_tikz)
+	pgfsave("../exports/validation_experiments_dirichlet.pdf", fig_tikz)
+end
+
 # ╔═╡ Cell order:
 # ╟─d2910ba3-6f0c-4905-b10a-f32ad8239ab6
 # ╠═608b82c0-adf2-11ed-0850-ebf580639ec8
@@ -365,3 +623,5 @@ end
 # ╠═2bfa1683-86c3-4b9d-b7e3-3890bb32c645
 # ╟─075cbfdd-698b-4a38-8ae3-557d39acb5d2
 # ╟─e2ed2836-5a4d-4762-ab59-d77277b47f39
+# ╟─ef365ff1-9a53-4e7e-96ce-a68baeb6b67b
+# ╟─b6ecbc4d-6bc2-4ec5-ad5b-78ae441fbf49
