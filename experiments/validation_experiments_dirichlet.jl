@@ -285,6 +285,24 @@ begin
 		tmp = mean_precision.(dist)
 		return first.(tmp), last.(tmp)
 	end
+	@rule Mixture((:inputs, k), Marginalisation) (m_out::Any, q_switch::PointMass) = begin
+	
+	    # check whether mean is one-hot
+	    p = mean(q_switch)
+	    @assert sum(p) ≈ 1 "The selector variable connected to the Mixture node is not normalized."
+	    @assert all(x -> x == 1 || x == 0, p) "The selector variable connected to the Mixture node is not one-hot encoded."
+	
+	    # get selected cluster
+	    kmax = argmax(p)
+	
+	    if k == kmax
+	        @logscale 0
+	        return m_out
+	    else
+	        @logscale missing
+	        return missing
+	    end
+	end
 end;
 
 # ╔═╡ aec5408c-aab9-4fba-9bf2-0bace3c2c29f
@@ -326,7 +344,7 @@ md"""sample index: $(@bind N Slider(1:nr_samples; default=nr_samples, show_value
 begin
 	plt.figure()
 	plt.scatter(data[1,1:N], data[2,1:N], alpha=0.1, c=argmax.(mean.(results_dirichlet_process.history[:z][1:N])))
-	for k in findall(x -> x > 1, probvec(results_dirichlet_process.history[:π][N]))
+	for k in findall(x -> x >= 1, probvec(results_dirichlet_process.history[:π][N]))
 		plt.scatter(mean(results_dirichlet_process.history[:θk][N][k])[1], mean(results_dirichlet_process.history[:θk][N][k])[2], marker="x", color="black")
 	end
 	plt.xlabel(L"y_1")
