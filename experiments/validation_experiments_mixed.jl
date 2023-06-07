@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.22
+# v0.19.26
 
 using Markdown
 using InteractiveUtils
@@ -539,7 +539,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.0"
 manifest_format = "2.0"
-project_hash = "a1c6709c8a9c1ca54f3b922066906337523b4298"
+project_hash = "506e7b62026ad112b446cdf98f196ac531b4f135"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
