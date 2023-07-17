@@ -39,10 +39,10 @@ end;
 md"""number of samples: $(@bind nr_samples Slider(1:2_000; default=1500, show_value=true))"""
 
 # ╔═╡ 34ab39fd-02c3-4e12-857b-3673315cf799
-dist = MixtureModel(Normal, [(-4.0, 1.0), (0.0, 1.0), (5.0, 1.0)], [0.2, 0.5, 0.3]);
+dist = MixtureModel(Normal, [(-3.0, 1.0), (0.0, 1.0), (4.0, 1.0)], [0.2, 0.5, 0.3]);
 
 # ╔═╡ b9949a48-89d3-4f31-8d48-375ef6c22f84
-noise_var = 1e-1
+noise_var = 5.0
 
 # ╔═╡ 01060a9a-4cba-4543-924b-2ef9927be903
 function generate_data(dist, nr_samples; rng=MersenneTwister(123))
@@ -96,9 +96,9 @@ md"""
     for i in 1:nr_samples
 
         # specify prior models over θ
-        θ1[i] ~ NormalMeanPrecision(-4, 1)
+        θ1[i] ~ NormalMeanPrecision(-3, 1)
         θ2[i] ~ NormalMeanPrecision(0, 1)
-        θ3[i] ~ NormalMeanPrecision(5, 1)
+        θ3[i] ~ NormalMeanPrecision(4, 1)
 
         # specify mixture distribution
         θ[i] ~ Mixture(z, (θ1[i], θ2[i], θ3[i]))
@@ -158,9 +158,9 @@ md"""
     for i in 1:nr_samples
 
         # specify prior models over θ
-        θ1[i] ~ NormalMeanPrecision(-4, 1)
+        θ1[i] ~ NormalMeanPrecision(-3, 1)
         θ2[i] ~ NormalMeanPrecision(0, 1)
-        θ3[i] ~ NormalMeanPrecision(5, 1)
+        θ3[i] ~ NormalMeanPrecision(4, 1)
 
         # specify mixture distribution
         θ[i] ~ Mixture(z, (θ1[i], θ2[i], θ3[i])) where { pipeline = RequireMarginal(switch) }
@@ -326,9 +326,9 @@ end
 	z ~ Categorical(π) where { pipeline = EnforceMarginalFunctionalDependency(:out) }
 
 	# specify prior models over θ
-	θ1 ~ NormalMeanPrecision(-4, 1)
+	θ1 ~ NormalMeanPrecision(-3, 1)
 	θ2 ~ NormalMeanPrecision(0, 1)
-	θ3 ~ NormalMeanPrecision(5, 1)
+	θ3 ~ NormalMeanPrecision(4, 1)
 
 	# specify mixture distribution
 	θ ~ Mixture(z, (θ1, θ2, θ3)) where { pipeline = EnforceMarginalFunctionalDependency(:switch) }
@@ -357,7 +357,7 @@ end
 		data          = (y = data, ),
 		constraints   = constraints_combination(),
 		autoupdates   = autoupdates_combination,
-		initmarginals = (π = Dirichlet(ones(3)./3*length(data)), ),
+		initmarginals = (π = Dirichlet(ones(3)./3*length(data)*100), ),
 		returnvars    = (:π, ),
 		keephistory   = length(data),
 		historyvars   = (z = KeepLast(), π = KeepLast()),
@@ -372,7 +372,7 @@ results_combination = run_combination(data)
 # ╔═╡ af34a2c1-d45e-4245-89fb-e6993fcb968f
 begin
 	plt.figure()
-	plt.bar(1:length(probvec(results_combination.history[:π][end])), normalize(probvec(results_combination.history[:π][end]) - ones(3)./3*nr_samples, 1))
+	plt.bar(1:length(probvec(results_combination.history[:π][end])), normalize(probvec(results_combination.history[:π][end]) - ones(3)./3*nr_samples*100, 1))
 	plt.xlabel(L"k")
 	plt.ylabel(L"p(z=k\mid y_{1:N})")
 	plt.xticks(1:length(probvec(results_combination.history[:π][end])),1:length(probvec(results_combination.history[:π][end])) )
@@ -405,9 +405,9 @@ md"""
 		z[i] ~ Categorical(π)
 	
 		# specify prior models over θ
-		θ1[i] ~ NormalMeanPrecision(-4, 1)
+		θ1[i] ~ NormalMeanPrecision(-3, 1)
 		θ2[i] ~ NormalMeanPrecision(0, 1)
-		θ3[i] ~ NormalMeanPrecision(5, 1)
+		θ3[i] ~ NormalMeanPrecision(4, 1)
 	
 		# specify mixture distribution
 		θ[i] ~ Mixture(z[i], (θ1[i], θ2[i], θ3[i]))
@@ -546,7 +546,7 @@ begin
 		axx = plt.subplot(6, 4, 3+4*i)
 		i == 1 ? axx.set_title("Model combination (online)") : nothing
 		co = run_combination(datax)
-		axx.bar(1:length(probvec(co.history[:π][end])), normalize(probvec(co.history[:π][end]) - ones(3)./3*(k-1), 1))
+		axx.bar(1:length(probvec(co.history[:π][end])), normalize(probvec(co.history[:π][end]) - ones(3)./3*(100*k-1), 1))
 		axx.set_xlabel(L"k")
 		axx.set_ylabel(L"\mathrm{E}[z]")
 		axx.set_xticks(1:length(probvec(co.history[:π][end])), 1:length(probvec(co.history[:π][end])))
@@ -664,7 +664,7 @@ fig_tikz = @pgf GroupPlot(
     Plot({ 
 			fill="blue",
         },
-        Table(1:length(mean(cop1.history[:π][end])), normalize(probvec(cop1.history[:π][end]) - (1-1)/3*ones(3), 1))
+        Table(1:length(mean(cop1.history[:π][end])), normalize(probvec(cop1.history[:π][end]) - (1*100-1)/3*ones(3), 1))
     ),
 
 	# axis row 1, column 4
@@ -719,7 +719,7 @@ fig_tikz = @pgf GroupPlot(
     Plot({ 
 			fill="blue",
         },
-        Table(1:length(mean(cop5.history[:π][end])), normalize(probvec(cop5.history[:π][end]) - (5-1)/3*ones(3), 1))
+        Table(1:length(mean(cop5.history[:π][end])), normalize(probvec(cop5.history[:π][end]) - (5*100-1)/3*ones(3), 1))
     ),
 
 	# axis row 2, column 4
@@ -772,7 +772,7 @@ fig_tikz = @pgf GroupPlot(
     Plot({ 
 			fill="blue",
         },
-        Table(1:length(mean(cop10.history[:π][end])), normalize(probvec(cop10.history[:π][end]) - (10-1)/3*ones(3), 1))
+        Table(1:length(mean(cop10.history[:π][end])), normalize(probvec(cop10.history[:π][end]) - (10*100-1)/3*ones(3), 1))
     ),
 
 	# axis row 3, column 4
@@ -826,7 +826,7 @@ fig_tikz = @pgf GroupPlot(
     Plot({ 
 			fill="blue",
         },
-        Table(1:length(mean(cop100.history[:π][end])), normalize(probvec(cop100.history[:π][end]) - (100-1)/3*ones(3), 1))
+        Table(1:length(mean(cop100.history[:π][end])), normalize(probvec(cop100.history[:π][end]) - (100*100-1)/3*ones(3), 1))
     ),
 
 	# axis row 4, column 4
@@ -880,7 +880,7 @@ fig_tikz = @pgf GroupPlot(
     Plot({ 
 			fill="blue",
         },
-        Table(1:length(mean(cop1000.history[:π][end])), normalize(probvec(cop1000.history[:π][end]) - (1000-1)/3*ones(3), 1))
+        Table(1:length(mean(cop1000.history[:π][end])), normalize(probvec(cop1000.history[:π][end]) - (1000*100-1)/3*ones(3), 1))
     ),
 
 	# axis row 5, column 4
@@ -931,7 +931,7 @@ SpecialFunctions = "~2.2.0"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0"
+julia_version = "1.9.1"
 manifest_format = "2.0"
 project_hash = "70311c4ca3abd960d74a067dbd892414a37a39e7"
 
@@ -1857,7 +1857,7 @@ version = "1.2.13+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.7.0+0"
+version = "5.8.0+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
